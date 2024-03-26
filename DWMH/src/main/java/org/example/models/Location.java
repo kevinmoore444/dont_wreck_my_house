@@ -17,6 +17,11 @@ public class Location {
     //Constructors
     public Location(){};
 
+    public Location(int locationId, User host) {
+        this.locationId = locationId;
+        this.host = host;
+    }
+
     public Location(int locationId, User host, String address, String city, String state, BigDecimal standardRate, BigDecimal weekendRate) {
         this.locationId = locationId;
         this.host = host;

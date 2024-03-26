@@ -18,6 +18,7 @@ public class ReservationMapper implements RowMapper<Reservation>  {
         reservation.setReservationId(rs.getInt("reservation_id"));
         reservation.setStartDate(rs.getDate("start_date").toLocalDate());
         reservation.setEndDate(rs.getDate("end_date").toLocalDate());
+        reservation.setTotal(rs.getBigDecimal("total"));
 
         //Compose a Guest to be added to reservation
         User guest = new User();

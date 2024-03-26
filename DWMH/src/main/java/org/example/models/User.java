@@ -13,6 +13,10 @@ public class User {
     //Constructors
     public User(){}
 
+    public User(int userId) {
+        this.userId = userId;
+    }
+
     public User(int userId, String first_name, String last_name, String email, String phone) {
         this.userId = userId;
         this.first_name = first_name;
