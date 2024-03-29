@@ -7,7 +7,9 @@ import javax.sql.DataSource;
 
 public class DataHelper {
 
-    //Datasource object is called in getJdbcTemplate. Datasource is wired into the template.
+    //JdbcTemplate requires a datasource object in order to be instantiated.
+    //The datasource object needs a URL, User, and Password.
+    //These are stored in edit configurations -> Application / J-Unit
     public static DataSource getDataSource() {
         MysqlDataSource dataSource = new MysqlDataSource();
         // These are environment variables.
@@ -16,7 +18,8 @@ public class DataHelper {
         dataSource.setPassword(System.getenv("DB_PASSWORD"));
         return dataSource;
     }
-    //How will we use this template?
+
+    // getJdbcTemplate() is wired into the JDBC template in the App class when instantiating the repository.
     public static JdbcTemplate getJdbcTemplate() {
         return new JdbcTemplate(getDataSource());
     }

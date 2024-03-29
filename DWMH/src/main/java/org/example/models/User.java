@@ -66,7 +66,7 @@ public class User {
         this.phone = phone;
     }
 
-
+    //Override the equals and hashcode methods.
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

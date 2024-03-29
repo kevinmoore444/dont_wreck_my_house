@@ -19,8 +19,6 @@ public class Reservation {
     public Reservation() {
     }
 
-    ;
-
     public Reservation(int reservationId, Location location, User guest, LocalDate startDate, LocalDate endDate, BigDecimal total) {
         this.reservationId = reservationId;
         this.location = location;
@@ -78,7 +76,7 @@ public class Reservation {
     public void setTotal(BigDecimal total) {
         this.total = total;
     }
-
+    //Override the equals and hashCode methods.
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

@@ -11,23 +11,24 @@ public class Location {
     private String address;
     private String city;
     private String state;
+    private String postalCode;
     private BigDecimal standardRate;
     private BigDecimal weekendRate;
 
     //Constructors
     public Location(){};
-
+    //This built For ease of use w/testing
     public Location(int locationId, User host) {
         this.locationId = locationId;
         this.host = host;
     }
-
-    public Location(int locationId, User host, String address, String city, String state, BigDecimal standardRate, BigDecimal weekendRate) {
+    public Location(int locationId, User host, String address, String city, String state, String postalCode, BigDecimal standardRate, BigDecimal weekendRate) {
         this.locationId = locationId;
         this.host = host;
         this.address = address;
         this.city = city;
         this.state = state;
+        this.postalCode = postalCode;
         this.standardRate = standardRate;
         this.weekendRate = weekendRate;
     }
@@ -73,6 +74,15 @@ public class Location {
         this.state = state;
     }
 
+
+    public String getPostalCode() {
+        return postalCode;
+    }
+
+    public void setPostalCode(String postalCode) {
+        this.postalCode = postalCode;
+    }
+
     public BigDecimal getStandardRate() {
         return standardRate;
     }
@@ -88,7 +98,7 @@ public class Location {
     public void setWeekendRate(BigDecimal weekendRate) {
         this.weekendRate = weekendRate;
     }
-
+    //Override the equals method to test for equality instead of comparing locations in memory.
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -101,11 +111,14 @@ public class Location {
         if (!Objects.equals(address, location.address)) return false;
         if (!Objects.equals(city, location.city)) return false;
         if (!Objects.equals(state, location.state)) return false;
+        if (!Objects.equals(postalCode, location.postalCode)) return false;
         if (!Objects.equals(standardRate, location.standardRate)) return false;
         if (!Objects.equals(weekendRate, location.weekendRate)) return false;
         return true;
     }
-
+    //Override the hashcode method. This method ensures that objects with the same values
+    // for all the specified fields will have the same hash code, which is crucial for
+    // correct functioning when these objects are used in hash-based collections such as HashMap, HashSet, etc.
     @Override
     public int hashCode() {
         int result = locationId;
@@ -113,6 +126,7 @@ public class Location {
         result = 31 * result + (address != null ? address.hashCode() : 0);
         result = 31 * result + (city != null ? city.hashCode() : 0);
         result = 31 * result + (state != null ? state.hashCode() : 0);
+        result = 31 * result + (postalCode != null ? postalCode.hashCode() : 0);
         result = 31 * result + (standardRate != null ? standardRate.hashCode() : 0);
         result = 31 * result + (weekendRate != null ? weekendRate.hashCode() : 0);
         return result;
