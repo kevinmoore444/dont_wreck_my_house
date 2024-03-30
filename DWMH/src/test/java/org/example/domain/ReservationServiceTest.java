@@ -6,6 +6,7 @@ import org.example.data.UserRepositoryDouble;
 import org.example.models.Reservation;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.example.TestHelper.makeReservation;
@@ -35,76 +36,86 @@ public class ReservationServiceTest {
         assertEquals(nullResponse, null);
     }
 
-
-
-    //Add /Update / Validate Reservation
-
-    //Make a valid reservation via makeReservation
-    //Set that same object as the payload of a result object.
-    //If the reservation passes validation, the service will call
-    // the repository double, which will return that same object.
     @Test
     void shouldAddValidReservation(){
-        Reservation reservation = makeReservation();
-        Result<Reservation> mockResult = makeResult(null, makeReservation());
-        Result<Reservation> actualResult = reservationService.add(reservation);
-        assertTrue(mockResult.equals(actualResult) );
+        Reservation reservation = makeReservation(1);
+        Result<Reservation> result = reservationService.add(reservation);
+        assertTrue(result.isSuccess());
+    }
+
+    @Test
+    void shouldUpdateValidReservation(){
+        Reservation reservation = makeReservation(1);
+        Result<?> result = reservationService.update(reservation);
+        assertTrue(result.isSuccess());
     }
 
 
 
     @Test
-    void shouldUpdateValidReservation(){}
+    void shouldNotAddInvalidLocation(){
+        //If the location id is 5 the repository double will return null to the service
+        //and the service will register the error.
+        Reservation reservation = makeReservation(1);
+        reservation.getLocation().setLocationId(5);
+        Result<Reservation> result = reservationService.add(reservation);
+        assertEquals(result.getErrorMessages().get(0), "Location does not exist in our database");
+    }
+
+    @Test
+    void shouldNotAddInvalidGuest(){
+        Reservation reservation = makeReservation(1);
+        reservation.getGuest().setUserId(5);
+        Result<Reservation> result = reservationService.add(reservation);
+        assertEquals(result.getErrorMessages().get(0), "Guest does not exist in our database");
+    }
 
 
-    //If null the service will return "Reservation may not be null"
+
+    //If null the service will return message "Reservation may not be null"
     //as it's result message
     @Test
     void shouldNotAddNull(){
         Reservation reservation = null;
         Result<Reservation> result = reservationService.add(reservation);
-        System.out.println(result.getErrorMessages());
         assertEquals(result.getErrorMessages().get(0), "Reservation may not be null");
     }
 
 
     @Test
     void shouldNotAddMissingEndDate(){
-
+        Reservation reservation = makeReservation(1);
+        reservation.setEndDate(null);
+        Result<Reservation> result = reservationService.add(reservation);
+        assertEquals(result.getErrorMessages().get(0), "End Date Required");
     }
-
-
-    @Test
-    void shouldNotAddInvalidGuest(){
-
-    }
-
-
-    @Test
-    void shouldNotAddInvalidLocation(){
-
-    }
-
-
 
     @Test
     void shouldNotAddStartDateBeforeEndDate(){
-
+        Reservation reservation = makeReservation(1);
+        reservation.setEndDate(reservation.getStartDate().minusWeeks(3));
+        Result<Reservation> result = reservationService.add(reservation);
+        assertEquals(result.getErrorMessages().get(0), "Start date must come before end date");
     }
 
     @Test
     void shouldNotAddReservationDateOverlap(){
-
+        //Creating reservation 2. When checking for overlap, the
+        //repository-double  returns a list.of(reservation 2).
+        //So this will create an overlap.
+        Reservation reservation = makeReservation(2);
+        Result<Reservation> result = reservationService.add(reservation);
+        assertEquals(result.getErrorMessages().get(0), "Reservation overlaps with an existing reservation");
     }
-
-
 
     @Test
     void shouldNotAddStartDateInPast(){
-
+        Reservation reservation = makeReservation(1);
+        reservation.setStartDate(LocalDate.of(2020, 12,12));
+        reservation.setEndDate(LocalDate.of(2020, 12,18));
+        Result<Reservation> result = reservationService.add(reservation);
+        assertEquals(result.getErrorMessages().get(0), "Start date cannot be in the past");
     }
-
-
 
     //Delete Reservation
     //If you successfully call deleteById via the service, the repository double will return true

@@ -3,7 +3,9 @@ package org.example.domain;
 import org.example.data.LocationRepository;
 import org.example.data.ReservationRepository;
 import org.example.data.UserRepository;
+import org.example.models.Location;
 import org.example.models.Reservation;
+import org.example.models.User;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -108,7 +110,7 @@ public class ReservationService {
              result.addErrorMessage("Location is required");
         }
         if (reservation.getGuest() == null){
-             result.addErrorMessage("Guest is required");
+             result.addErrorMessage("Guest was not found");
         }
         if(!result.isSuccess()){
             return result;
@@ -140,6 +142,19 @@ public class ReservationService {
 
         return result;
     }
+
+    //Find Location By Host Email
+    public Location findLocationByEmail(String email){
+        Location location = locationRepository.findLocationByEmail(email);
+        return location;
+    }
+
+    //Find  User By ID
+    public User findUserByEmail(String email){
+        User user = userRepository.findUserByEmail(email);
+        return user;
+    }
+
 
     //Is Overlapping
     public boolean doesOverlap(Reservation reservation) {

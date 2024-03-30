@@ -1,7 +1,6 @@
 package org.example.data;
 
 import org.example.DataHelper;
-import org.example.data.UserJdbcTemplateRepository;
 import org.example.models.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,6 +33,14 @@ public class UserJdbcTemplateRepositoryTest {
         User user = repository.findUserByID(1);
         assertEquals(user.getFirst_name(), "FirstName1");
         assertEquals(user.getEmail(), "user1@gmail.com");
+    }
+
+
+    @Test
+    void shouldFindByEmail(){
+        User user = repository.findUserByEmail("user1@gmail.com");
+        assertEquals(user.getFirst_name(), "FirstName1");
+
     }
 
 }

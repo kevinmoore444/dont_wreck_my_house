@@ -31,4 +31,24 @@ public class LocationJdbcTemplateRepository implements LocationRepository{
                 .stream().findFirst().orElse(null);
     }
 
+
+    @Override
+    public Location findLocationByEmail(String email){
+        final String sql = """
+                SELECT
+                    l.location_id, l.address, l.city, l.postal_code, 
+                    l.standard_rate, l.weekend_rate, s.usps_code, 
+                    l.user_id as host_id, 
+                    ho.first_name AS host_first_name, ho.last_name AS host_last_name,
+                    ho.email AS host_email, ho.phone AS host_phone
+                    FROM location l
+                    INNER JOIN user ho ON l.user_id = ho.user_id
+                    INNER JOIN state s ON s.state_id = l.state_id
+                    WHERE ho.email = ?;
+                """;
+        return jdbcTemplate.query(sql, new LocationMapper(), email)
+                .stream().findFirst().orElse(null);
+
+    }
+
 }

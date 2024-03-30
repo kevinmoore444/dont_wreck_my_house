@@ -25,7 +25,17 @@ public class UserJdbcTemplateRepository implements UserRepository {
                 .stream().findFirst().orElse(null);
     }
 
-
+    @Override
+    public User findUserByEmail(String email){
+        final String sql = """
+                SELECT
+                    user_id, first_name, last_name, email, phone
+                    FROM user 
+                    WHERE email = ?;
+                """;
+        return jdbcTemplate.query(sql, new UserMapper(), email)
+                .stream().findFirst().orElse(null);
+    }
 
 
 

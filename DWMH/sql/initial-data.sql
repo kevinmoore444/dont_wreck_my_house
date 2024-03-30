@@ -1540,3 +1540,17 @@ insert into location (user_id, address, city, postal_code, state_id, standard_ra
 	(997,'217 David Avenue','Milwaukee','53215',(select state_id from state where usps_code = 'WI'),163,188),
 	(998,'9 Valley Edge Alley','San Antonio','78285',(select state_id from state where usps_code = 'TX'),322,372),
 	(999,'6366 Golf Plaza','Daytona Beach','32118',(select state_id from state where usps_code = 'FL'),311,340);
+
+--Inserting 1000 random reservations
+
+INSERT INTO reservation (location_id, guest_user_id, start_date, end_date, total)
+SELECT
+    location_id,
+    (SELECT user_id FROM `user` ORDER BY RAND() LIMIT 1) AS guest_user_id,
+    DATE_ADD(CURRENT_DATE(), INTERVAL FLOOR(RAND() * 30) DAY) AS start_date,
+    DATE_ADD(CURRENT_DATE(), INTERVAL FLOOR(RAND() * 30) DAY) AS end_date,
+    FLOOR(RAND() * 500 + 50) AS total
+FROM
+    location
+ORDER BY RAND()
+LIMIT 1000;

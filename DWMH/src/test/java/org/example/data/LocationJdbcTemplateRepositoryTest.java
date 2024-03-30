@@ -25,11 +25,18 @@ public class LocationJdbcTemplateRepositoryTest {
         jdbcTemplate.execute("call set_known_good_state();");
     }
 
-    //Find By ID Test
+    //Find By ID
     @Test
     void shouldFindById(){
         Location location = repository.findLocationByID(1);
         assertEquals(location.getLocationId(), 1);
+        assertEquals(location.getAddress(), "123 Fake St.");
+    }
+
+    //Find By Email
+    @Test
+    void shouldFindByEmail(){
+        Location location = repository.findLocationByEmail("user1@gmail.com");
         assertEquals(location.getAddress(), "123 Fake St.");
     }
 
