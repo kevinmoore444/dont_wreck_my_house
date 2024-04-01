@@ -60,6 +60,9 @@ public class ReservationService {
         if(!result.isSuccess()){
             return result;
         }
+
+
+
         //Update method returns a boolean.
         boolean success = reservationRepository.update(reservation);
         //If failed, add message to the result object.
@@ -96,21 +99,21 @@ public class ReservationService {
         Result<Reservation> result = new Result<>();
        //Ensure reservation isn't null
         if(reservation == null){
-            result.addErrorMessage("Reservation may not be null");
+            result.addErrorMessage("Error: Reservation may not be null");
             return result;
         }
         //Ensure the reservation fields are provided.
         if(reservation.getStartDate() == null){
-            result.addErrorMessage("Start Date Required");
+            result.addErrorMessage("Error: Start Date Required");
         }
         if(reservation.getEndDate() == null){
-            result.addErrorMessage("End Date Required");
+            result.addErrorMessage("Error: End Date Required");
         }
         if(reservation.getLocation() == null){
-             result.addErrorMessage("Location is required");
+             result.addErrorMessage("Error: Location is required");
         }
         if (reservation.getGuest() == null){
-             result.addErrorMessage("Guest was not found");
+             result.addErrorMessage("Error: Guest was not found");
         }
         if(!result.isSuccess()){
             return result;
@@ -118,41 +121,47 @@ public class ReservationService {
 
         //Ensure the guest and host exist in the database.
         if(locationRepository.findLocationByID(reservation.getLocation().getLocationId()) == null){
-            result.addErrorMessage("Location does not exist in our database");
+            result.addErrorMessage("Error: Location does not exist in our database");
         }
         if(userRepository.findUserByID(reservation.getGuest().getUserId()) == null){
-            result.addErrorMessage("Guest does not exist in our database");
+            result.addErrorMessage("Error: Guest does not exist in our database");
         }
-
         //Ensure the start date comes before the end date.
         if (reservation.getEndDate().isBefore(reservation.getStartDate())) {
-            result.addErrorMessage("Start date must come before end date");
+            result.addErrorMessage("Error: Start date must come before end date");
         }
-
         //Ensure the reservation doesn't overlap existing reservation dates
         if(doesOverlap(reservation)){
-            result.addErrorMessage("Reservation overlaps with an existing reservation");
+            result.addErrorMessage("Error: Reservation overlaps with an existing reservation");
         }
-
         //Ensure start date is in the future.
         if(reservation.getStartDate().isBefore(LocalDate.now())){
             result.addErrorMessage("Start date cannot be in the past");
         }
-
-
         return result;
     }
 
     //Find Location By Host Email
-    public Location findLocationByEmail(String email){
+    public Result<Location> findLocationByEmail(String email){
+        Result<Location> result = new Result<>();
         Location location = locationRepository.findLocationByEmail(email);
-        return location;
+        if(location == null){
+            result.addErrorMessage("Error: Host Not Found");
+            return result;
+        }
+        result.setPayload(location);
+        return result;
     }
 
     //Find  User By ID
-    public User findUserByEmail(String email){
+    public Result<User> findUserByEmail(String email){
+        Result<User> result = new Result<>();
         User user = userRepository.findUserByEmail(email);
-        return user;
+        if(user == null){
+            result.addErrorMessage("Error: Guest Not Found");
+        }
+        result.setPayload(user);
+        return result;
     }
 
 
@@ -164,9 +173,12 @@ public class ReservationService {
         LocalDate newEndDate = reservation.getEndDate();
         //Iterate over the list of Reservations
         for (Reservation existingReservation : hostReservations) {
+            //In validating an UPDATED reservation, it's possible the updated reservation will overlap dates with the un-updated version - this block will bypass that.
+            if(existingReservation.getReservationId() == reservation.getReservationId()){
+                continue;
+            }
             LocalDate existingStartDate = existingReservation.getStartDate();
             LocalDate existingEndDate = existingReservation.getEndDate();
-
             // Check if the new reservation overlaps with any existing reservation
             if (newStartDate.isBefore(existingEndDate) && newEndDate.isAfter(existingStartDate)) {
                 // Overlapping dates found

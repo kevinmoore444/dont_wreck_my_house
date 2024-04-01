@@ -3,6 +3,7 @@ package org.example.ui;
 import org.example.domain.Result;
 import org.example.models.Location;
 import org.example.models.Reservation;
+import org.example.models.User;
 
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
@@ -59,7 +60,8 @@ public class View {
         printHeader("Summary");
         System.out.printf("Start: %s\n", reservation.getStartDate());
         System.out.printf("End: %s\n", reservation.getEndDate());
-        System.out.printf("Total: $%.2f\n", reservation.getTotal());
+        System.out.printf("Total: $%.2f\n\n", reservation.getTotal());
+
     }
 
     //Calculate Total
@@ -95,6 +97,7 @@ public class View {
 
     //Print Errors
     public void printErrors(Result<?> result){
+        System.out.println("");
         for (String message : result.getErrorMessages()){
             System.out.println(message);
         }
@@ -127,8 +130,12 @@ public class View {
 
     //View All Host Reservations
     public void displayHostReservations(List<Reservation> all, Location hostLocation) {
+        if(hostLocation == null){
+            io.println("\nHost Not Found\n");
+            return;
+        }
         String hostName = hostLocation.getHost().getFirst_name() + " " + hostLocation.getHost().getLast_name();
-        io.printf("%s\n%s\n%s, %s %s\n",
+        io.printf("\n%s\n%s\n%s, %s %s\n",
                 hostName, hostLocation.getAddress(), hostLocation.getCity(), hostLocation.getState(), hostLocation.getPostalCode());
         io.printf("=================\n");
         //If Host Has No Reservations
@@ -139,9 +146,68 @@ public class View {
         //Else - Print Out All Reservations
         for (Reservation reservation : all){
             io.printf("ID: %d, %s - %s, Guest: %s, %s Email: %s\n",
-                    reservation.getReservationId(), reservation.getStartDate(), reservation.getEndDate(),
+                    reservation.getReservationId(), reservation.getStartDate().format(formatter), reservation.getEndDate().format(formatter),
                     reservation.getGuest().getLast_name(), reservation.getGuest().getLast_name(),
                     reservation.getGuest().getEmail());
+        }
+    }
+
+
+    //Create Reservation Methods
+
+    //Make Reservation
+    public Reservation makeReservation(Location hostLocation, User guest, LocalDate startDate, LocalDate endDate){
+        //Create new Reservation Object
+        Reservation reservation = new Reservation();
+        //Set Reservation Object w/ Fields Provided
+        reservation.setLocation(hostLocation);
+        reservation.setGuest(guest);
+        reservation.setStartDate(startDate);
+        reservation.setEndDate(endDate);
+        reservation.setTotal(calculateTotal(reservation));
+
+        return reservation;
+    }
+
+    //Read Start Date
+    public LocalDate readStartDate(){
+        while(true) {
+            LocalDate startDate = getDate("Start (MM/dd/yyyy)");
+            if (startDate.isBefore(LocalDate.now())){
+                System.out.println("\nError: Please input a start date in the future\n");
+            }
+            else{
+                return startDate;
+            }
+        }
+    }
+
+    public LocalDate readEndDate(LocalDate startDate){
+        while(true) {
+            LocalDate endDate = getDate("End (MM/dd/yyyy)");
+            if (endDate.isBefore(startDate)){
+                System.out.println("\nError: End Date is Before the Start Date\n");
+            }
+            else{
+                return endDate;
+            }
+        }
+    }
+
+
+    public int getIdForDeletion(List<Reservation> reservations){
+        while(true) {
+            int idForDeletion = getID("Reservation ID");
+
+            for(Reservation reservation : reservations){
+                if(idForDeletion == reservation.getReservationId()){
+                    return idForDeletion;
+                }
+                if(idForDeletion == 0){
+                    return 0;
+                }
+            }
+            System.out.println("Please enter an ID from the list or enter 0 to exit");
         }
     }
 

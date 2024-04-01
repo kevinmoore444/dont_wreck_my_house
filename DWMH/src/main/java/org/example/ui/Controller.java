@@ -55,48 +55,58 @@ public class Controller {
         view.printHeader("View Reservations For Host Location");
         String hostEmail = view.getEmail("Host Email");
         List<Reservation> reservations = service.findReservationByEmail(hostEmail);
-        view.displayHostReservations(reservations, service.findLocationByEmail(hostEmail));
+        Result<Location> result = service.findLocationByEmail(hostEmail);
+        view.displayHostReservations(reservations, result.getPayload());
     }
 
     //#3 - Make a Reservation
     public void createReservation(){
         //Header
         view.printHeader("Make a Reservation");
-        //Collect Host/Guest Email
+
+        //Collect Validate Guest Email,
         String guestEmail = view.getEmail("Guest Email");
+        Result<User> guestResult = service.findUserByEmail(guestEmail);
+        if(!guestResult.isSuccess()){
+            view.printErrors(guestResult);
+            return;
+        }
+        User guest = guestResult.getPayload();
+
+        //Collect Validate Host/Location
         String hostEmail = view.getEmail("Host Email");
-        //Display Current Host Reservations
+        Result<Location> locationResult = service.findLocationByEmail(hostEmail);
+        if(!locationResult.isSuccess()){
+            view.printErrors(locationResult);
+            return;
+        }
+        Location hostLocation = locationResult.getPayload();
+
+        //Display Current Host Reservations.
         List<Reservation> reservations = service.findReservationByEmail(hostEmail);
-        view.displayHostReservations(reservations, service.findLocationByEmail(hostEmail));
-        //Read Start-End Date
-        LocalDate startDate = view.getDate("Start (MM/dd/yyyy)");
-        LocalDate endDate = view.getDate("End (MM/dd/yyyy)");
+        view.displayHostReservations(reservations, hostLocation);
 
-        //Obtain Location and Guest From the service
-        Location location = service.findLocationByEmail(hostEmail);
-        User guest = service.findUserByEmail(guestEmail);
+        //Read Start Date
+        LocalDate startDate = view.readStartDate();
 
-        //Create Reservation Object from the Fields Provided
-        Reservation reservation = new Reservation();
-        reservation.setLocation(location);
-        reservation.setGuest(guest);
-        reservation.setStartDate(startDate);
-        reservation.setEndDate(endDate);
-        reservation.setTotal(view.calculateTotal(reservation));
+        //Read End Date
+        LocalDate endDate = view.readEndDate(startDate);
+
+        //Make Reservation Object w/ the Fields Provided
+        Reservation reservation = view.makeReservation(hostLocation, guest, startDate, endDate);
 
         //Print Summary
         view.printSummary(reservation);
 
-        //Is this okay?
+        //If okay, add Reservation via Service
         boolean approval = view.getOkay("Is this okay? [y/n]");
-        //Add Reservation via Service
         if(approval){
-            Result<Reservation> result = service.add(reservation);
-            if (result.isSuccess()){
-                view.printSuccess("Reservation " + result.getPayload().getReservationId() + " has been created");
+            Result<Reservation> serviceResult = service.add(reservation);
+            if (!serviceResult.isSuccess()){
+                view.printErrors(serviceResult);
             }
             else {
-                view.printErrors(result);
+                view.printSuccess("Reservation " + serviceResult.getPayload().getReservationId() + " has been created");
             }
         }
     }
@@ -105,34 +115,46 @@ public class Controller {
     public void updateReservation() {
         //Header
         view.printHeader("Edit a Reservation");
-        //Collect Host Email
+
+        //Collect Host Email and display host reservations available for update
         String hostEmail = view.getEmail("Host Email");
-        //Display Current Host Reservations for potential update
         List<Reservation> reservations = service.findReservationByEmail(hostEmail);
-        view.displayHostReservations(reservations, service.findLocationByEmail(hostEmail));
-        //Read Reservation ID from User
-        int reservationId = view.getID("Reservation ID");
+        Result<Location> locationResult = service.findLocationByEmail(hostEmail);
+        if(!locationResult.isSuccess()){
+            view.printErrors(locationResult);
+            return;
+        }
+        view.displayHostReservations(reservations, locationResult.getPayload());
+
+        //Read Reservation ID from User - user must select ID from list of found reservations.
+        int reservationId = view.getIdForDeletion(reservations);
+        if (reservationId == 0){
+            return;
+        }
         //Use service to find Reservation by ID
         Reservation reservation = service.findReservationById(reservationId);
+
+
         //Read Start-End Date from User
-        LocalDate startDate = view.getDate("Start (MM/dd/yyyy)");
-        LocalDate endDate = view.getDate("End (MM/dd/yyyy)");
+        LocalDate startDate = view.readStartDate();
+        LocalDate endDate = view.readEndDate(startDate);
+
         //Update Reservation Object w/Start,End Dates and Total Cost
         reservation.setStartDate(startDate);
         reservation.setEndDate(endDate);
         reservation.setTotal(view.calculateTotal(reservation));
         //Print Summary
         view.printSummary(reservation);
-        //Is this okay?
+
+        //If okay, update reservation via service
         boolean approval = view.getOkay("Is this okay? [y/n]");
         if (approval) {
-            //Update Reservation via Service
-            Result<?> result = service.update(reservation);
-            if (result.isSuccess()){
-                view.printSuccess("Reservation " + reservation.getReservationId() + " has been updated");
+            Result<?> updateResult = service.update(reservation);
+            if (!updateResult.isSuccess()){
+                view.printErrors(updateResult);
             }
             else {
-                view.printErrors(result);
+                view.printSuccess("Reservation " + reservation.getReservationId() + " has been updated");
             }
         }
     }
@@ -140,24 +162,31 @@ public class Controller {
         public void deleteReservation() {
             //Header
             view.printHeader("Cancel a Reservation");
+
             //Collect Host Email
             String hostEmail = view.getEmail("Host Email");
-            //Display Current Host Reservations for potential update
+
+            //Use Host Email to find reservations and location details to display
             List<Reservation> reservations = service.findReservationByEmail(hostEmail);
-            view.displayHostReservations(reservations, service.findLocationByEmail(hostEmail));
-            //Read Reservation ID from User
-            int reservationId = view.getID("Reservation ID");
-            boolean approval = view.getOkay("Are you sure you want to delete? ID " + reservationId + " [y/n]");
+            Result<Location> result = service.findLocationByEmail(hostEmail);
+            view.displayHostReservations(reservations, result.getPayload());
+
+            //Read Reservation ID from User - user must select ID from list of found reservations.
+            int reservationId = view.getIdForDeletion(reservations);
+            if (reservationId == 0){
+                return;
+            }
+
+            //Get approval, delete Reservation via Service
+            boolean approval = view.getOkay("Are you sure you want to delete ID " + reservationId + "? [y/n]");
             if (approval) {
-                //Delete Reservation via Service
-                Result<?> result = service.deleteById(reservationId);
-                if (result.isSuccess()){
-                    view.printSuccess("Reservation " + reservationId + " has been deleted");
+                Result<?> deleteResult = service.deleteById(reservationId);
+                if (!deleteResult.isSuccess()){
+                    view.printErrors(deleteResult);
                 }
                 else {
-                    view.printErrors(result);
+                    view.printSuccess("Reservation " + reservationId + " has been deleted");
                 }
             }
         }
-
 }
